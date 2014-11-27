@@ -1,0 +1,14 @@
+[<%= @user %>]
+listen = /var/run/php-fpm.<%= @user %>.sock
+user = <%= @user %>
+group = <%= @group %>
+listen.owner = <%= node['nginx']['user'] %>
+listen.group = <%= node['nginx']['group'] %>
+listen.mode = '0600'
+pm = dynamic
+pm.max_children = 20
+pm.min_spare_servers = 1
+pm.max_spare_servers = 5
+env[LANG] = <%= node['locale']['lang'] %>
+env[LANGUAGE] = <%= node['locale']['lang'] %>
+env[LC_ALL] = <%= node['locale']['lc_all'] %>

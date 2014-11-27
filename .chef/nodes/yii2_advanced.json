@@ -1,0 +1,134 @@
+{
+    "run_list": [
+        "recipe[apt]",
+        "recipe[locale]",
+        "recipe[memcached]",
+        "recipe[nginx::repo]",
+        "recipe[nginx]",
+        "recipe[openssh]",
+        "recipe[timezone-ii]",
+        "recipe[php-app]"
+    ],
+    "locale": {
+        "lang": "en_US.UTF-8",
+        "lc_all": "en_US.UTF-8"
+    },
+    "memcached": {
+        "memory": 128
+    },
+    "mysql": {
+        "version": "5.5",
+        "remove_anonymous_users": true,
+        "remove_test_database": true,
+        "bind_address": "0.0.0.0",
+        "allow_remote_root": true,
+        "server_root_password": "",
+        "server_debian_password": ""
+    },
+    "nginx": {
+        "default_site_enabled": false
+    },
+    "openssh": {
+        "server": {
+            "permit_root_login": "no",
+            "password_authentication": "no",
+            "subsystem": "sftp /usr/lib/openssh/sftp-server",
+            "allow_groups": "vagrant www-data"
+        }
+    },
+    "postgresql": {
+        "version": "9.3",
+        "enable_pgdg_apt": true,
+        "config": {
+            "listen_addresses": "*"
+        },
+        "password": {
+            "postgres": "password"
+        },
+        "pg_hba": [
+            { "type": "host", "db": "all", "user": "all", "addr": "0.0.0.0/0", "method": "md5" }
+        ]
+    },
+    "tz": "Europe/Moscow",
+    "php-app": {
+        "user": "php-app",
+        "group": "www-data",
+        "project_dir": "/home/php-app/www",
+        "log_dir": "/home/php-app/log",
+        "ssh": {
+            "authorized_keys": [ "/tmp/.chef/files/id_rsa.pub" ],
+            "deployment_key": "/tmp/.chef/files/id_rsa",
+            "known_hosts": [ "github.com" ]
+        },
+        "php": {
+            "pools": [
+                {
+                    "name": "php-app",
+                    "template": "php-fpm-pool.conf.erb",
+                    "template_local": false,
+                    "variables": {
+                        "user": "php-app",
+                        "group": "www-data",
+                        "listen": "/var/run/php-fpm.php-app.sock"
+                    }
+                }
+            ]
+        },
+        "vhosts": [
+            {
+                "name" : "frontend.local",
+                "template": "nginx-vhost.conf.erb",
+                "template_local": false,
+                "variables" : {
+                    "url" : "frontend.local",
+                    "root" : "/home/php-app/www/frontend/web",
+                    "access_log": "/home/php-app/log/frontend.local-access.log",
+                    "error_log": "/home/php-app/log/frontend.local-error.log",
+                    "socket" : "/var/run/php-fpm.php-app.sock",
+                    "index" : "index.php",
+                    "allow_custom_scripts_execution" : true
+                }
+            },
+            {
+                "name" : "backend.local",
+                "template": "nginx-vhost.conf.erb",
+                "template_local": false,
+                "variables" : {
+                    "url" : "backend.local",
+                    "root" : "/home/php-app/www/backend/web",
+                    "access_log": "/home/php-app/log/backend.local-access.log",
+                    "error_log": "/home/php-app/log/backend.local-error.log",
+                    "socket" : "/var/run/php-fpm.php-app.sock",
+                    "index" : "index.php",
+                    "allow_custom_scripts_execution" : true
+                }
+            }
+        ],
+        "hosts": {
+            "127.0.0.1": ["frontend.local", "backend.local"]
+        },
+        "mysql": {
+            "root_connection": { "host": "127.0.0.1", "username": "root", "password": "" },
+            "databases": [
+                {"name": "yii2advanced", "username": "root", "password": ""},
+                {"name": "yii2_advanced_tests", "username": "root", "password": ""}
+            ]
+        },
+        "composer": {
+            "enable": true,
+            "github_auth_token": "",
+            "dev": true,
+            "global_requirements": [
+                "fxp/composer-asset-plugin:1.0.0-beta3",
+                "codeception/codeception=2.0.*",
+                "codeception/specify=*",
+                "codeception/verify=*"
+            ]
+        },
+        "init_commands": [
+            "php ./init --env=Development --overwrite=n",
+            "php ./yii migrate --interactive=0",
+            "php ./tests/codeception/bin/yii migrate --interactive=0"
+        ]
+    }
+}

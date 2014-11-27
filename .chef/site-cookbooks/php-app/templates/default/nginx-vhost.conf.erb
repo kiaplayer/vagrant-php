@@ -1,0 +1,45 @@
+server {
+    charset utf-8;
+    client_max_body_size 128M;
+
+    listen 80;
+
+    server_name <%= @url %>;
+    root        <%= @root %>;
+    index       <%= @index %>;
+
+    access_log  <%= @access_log %>;
+    error_log   <%= @error_log %>;
+
+    # Redirect to index file if file does not exists
+    location / {
+        try_files $uri $uri/ /<%= @index %>?$args;
+    }
+
+    # Process static files with nginx
+    location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)$ {
+        try_files $uri =404;
+    }
+
+    # Process php files with php-fpm
+    location ~ \.php$ {
+        fastcgi_index <%= @index %>;
+        include fastcgi_params;
+        set $fsn /<%= @index %>;
+
+        <% if @allow_custom_scripts_execution -%>
+            # Allow execution if file exists (bypass index file)
+            if (-f $document_root$fastcgi_script_name){
+                set $fsn $fastcgi_script_name;
+            }
+        <% end -%>
+
+        fastcgi_param SCRIPT_FILENAME $document_root$fsn;
+        fastcgi_pass unix:<%= @socket %>;
+    }
+
+    # Deny access to all dot files/folders
+    location ~ /\. {
+        deny all;
+    }
+}

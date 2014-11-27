@@ -1,0 +1,110 @@
+{
+    "run_list": [
+        "recipe[apt]",
+        "recipe[locale]",
+        "recipe[memcached]",
+        "recipe[nginx::repo]",
+        "recipe[nginx]",
+        "recipe[openssh]",
+        "recipe[timezone-ii]",
+        "recipe[php-app]"
+    ],
+    "locale": {
+        "lang": "en_US.UTF-8",
+        "lc_all": "en_US.UTF-8"
+    },
+    "memcached": {
+        "memory": 128
+    },
+    "mysql": {
+        "version": "5.5",
+        "remove_anonymous_users": true,
+        "remove_test_database": true,
+        "bind_address": "0.0.0.0",
+        "allow_remote_root": true,
+        "server_root_password": "",
+        "server_debian_password": ""
+    },
+    "nginx": {
+        "default_site_enabled": false
+    },
+    "openssh": {
+        "server": {
+            "permit_root_login": "no",
+            "password_authentication": "no",
+            "subsystem": "sftp /usr/lib/openssh/sftp-server",
+            "allow_groups": "vagrant www-data"
+        }
+    },
+    "postgresql": {
+        "version": "9.3",
+        "enable_pgdg_apt": true,
+        "config": {
+            "listen_addresses": "*"
+        },
+        "password": {
+            "postgres": "password"
+        },
+        "pg_hba": [
+            { "type": "host", "db": "all", "user": "all", "addr": "0.0.0.0/0", "method": "md5" }
+        ]
+    },
+    "tz": "Europe/Moscow",
+    "php-app": {
+        "user": "php-app",
+        "group": "www-data",
+        "project_dir": "/home/php-app/www",
+        "log_dir": "/home/php-app/log",
+        "ssh": {
+            "authorized_keys": [ "/tmp/.chef/files/id_rsa.pub" ],
+            "deployment_key": "/tmp/.chef/files/id_rsa",
+            "known_hosts": [ "github.com" ]
+        },
+        "php": {
+            "pools": [
+                {
+                    "name": "php-app",
+                    "template": "php-fpm-pool.conf.erb",
+                    "template_local": false,
+                    "variables": {
+                        "user": "php-app",
+                        "group": "www-data",
+                        "listen": "/var/run/php-fpm.php-app.sock"
+                    }
+                }
+            ]
+        },
+        "vhosts": [
+            {
+                "name" : "demo.local",
+                "template": "nginx-vhost.conf.erb",
+                "template_local": false,
+                "variables" : {
+                    "url" : "demo.local",
+                    "root" : "/home/php-app/www",
+                    "access_log": "/home/php-app/log/demo.local-access.log",
+                    "error_log": "/home/php-app/log/demo.local-error.log",
+                    "socket" : "/var/run/php-fpm.php-app.sock",
+                    "index" : "index.php",
+                    "allow_custom_scripts_execution" : true
+                }
+            }
+        ],
+        "hosts": {
+            "127.0.0.1": ["demo.local"]
+        },
+        "mysql": {
+            "root_connection": {"host": "127.0.0.1", "username": "root", "password": ""},
+            "databases": [
+                {"name": "demo", "username": "demo", "password": "demo"}
+            ]
+        },
+        "composer": {
+            "enable": true,
+            "github_auth_token": "",
+            "dev": true,
+            "global_requirements": []
+        },
+        "init_commands": []
+    }
+}

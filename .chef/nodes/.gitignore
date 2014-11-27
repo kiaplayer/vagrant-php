@@ -1,0 +1,5 @@
+*
+!.gitignore
+!yii2_advanced.json
+!yii2_basic.json
+!10.2.2.10.json

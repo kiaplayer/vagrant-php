@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+site 'https://supermarket.getchef.com/api/v1'
+
+cookbook 'apt'
+cookbook 'database'
+cookbook 'hostsfile'
+cookbook 'locale'
+cookbook 'memcached'
+cookbook 'mysql'
+cookbook 'nginx'
+cookbook 'openssh'
+cookbook 'postgresql'
+cookbook 'timezone-ii'
